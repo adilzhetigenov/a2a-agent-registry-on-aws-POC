@@ -91,11 +91,18 @@ Optionally, deploy `AgentRegistryWebUI` for a React-based web interface with Cog
 - AWS CLI configured with appropriate permissions
 - Node.js 18+
 - Python 3.11+
+- Docker (required by CDK to build Lambda and install dependencies)
 
 ### Deploy the Agent Registry
 
 ```bash
-cd infrastructure
+# Build the Web UI first (required for deployment)
+cd web-ui
+npm install
+npm run build
+
+# Deploy the infrastructure
+cd ../infrastructure
 npm install
 cdk deploy AgentRegistryStack
 ```
@@ -103,13 +110,7 @@ cdk deploy AgentRegistryStack
 ### Deploy Web UI (Optional)
 
 ```bash
-# Build the React app first
-cd web-ui
-npm install
-npm run build
-
-# Deploy the Web UI stack
-cd ../infrastructure
+cd infrastructure
 cdk deploy AgentRegistryWebUI
 ```
 

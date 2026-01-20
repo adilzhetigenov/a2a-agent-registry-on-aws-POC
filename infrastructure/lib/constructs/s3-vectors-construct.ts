@@ -24,7 +24,7 @@ export class S3VectorsConstruct extends Construct {
 
     // Lambda function for S3 Vectors management (custom resource)
     const s3VectorsHandler = new Function(this, "S3VectorsHandler", {
-      runtime: Runtime.PYTHON_3_13,
+      runtime: Runtime.PYTHON_3_14,
       handler: "index.handler",
       code: Code.fromInline(`
 import boto3

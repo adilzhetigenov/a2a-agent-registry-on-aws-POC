@@ -123,7 +123,7 @@ export class AgentRegistryStack extends cdk.Stack {
     // Create main API Lambda function using PythonFunction for automatic dependency management
     this.apiLambda = new PythonFunction(this, "ApiLambda", {
       entry: "../lambda/src",
-      runtime: lambda.Runtime.PYTHON_3_13,
+      runtime: lambda.Runtime.PYTHON_3_14,
       index: "handler.py",
       handler: "lambda_handler",
       role: apiLambdaRole,

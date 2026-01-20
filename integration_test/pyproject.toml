@@ -2,7 +2,7 @@
 name = "integration-test"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "boto3>=1.40.27",
     "requests>=2.32.5",
