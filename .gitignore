@@ -1,0 +1,11 @@
+.vscode
+.idea
+**/node_modules
+infrastructure/**/*.d.ts
+infrastructure/**/*.js
+infrastructure/cdk.out
+**/build
+.coverage
+**/__pycache__
+.kiro
+**/uv.lock
