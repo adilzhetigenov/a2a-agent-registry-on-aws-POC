@@ -69,6 +69,7 @@ export class AgentRegistryWebUI extends cdk.Stack {
       comment: "Agent Registry Web UI Distribution",
       defaultRootObject: "index.html",
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100, // Use only North America and Europe
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       enableLogging: true,
       logBucket: cloudFrontLogsBucket,
       logFilePrefix: "cloudfront-logs/",
@@ -490,7 +491,7 @@ def handler(event, context):
         {
           id: "AwsSolutions-CFR4",
           reason:
-            "Using default CloudFront certificate with minimum TLS 1.0 is acceptable for this internal application. Custom domain with higher TLS requirements can be added later if needed.",
+            "Using default CloudFront certificate with TLS 1.2 minimum protocol version (TLS_V1_2_2021). Custom domain can be added later if needed.",
         },
       ],
       true
