@@ -18,7 +18,7 @@ export interface Agent {
   agent_id: string;
   agent_card: AgentCard;
   is_online: boolean;
-  last_seen: string;
+  updated_at: string;
 }
 
 export interface StoredAgentCard {

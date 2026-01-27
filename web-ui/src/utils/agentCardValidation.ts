@@ -50,6 +50,10 @@ export function validateAgentCard(jsonString: string): ValidationResult {
     errors.push('description is required');
   }
 
+  if (typeof data.version !== 'string' || !data.version.trim()) {
+    errors.push('version is required');
+  }
+
   if (typeof data.url !== 'string' || !data.url.trim()) {
     errors.push('url is required');
   }

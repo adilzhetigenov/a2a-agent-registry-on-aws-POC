@@ -67,7 +67,7 @@ const AgentRegistry: React.FC<AgentRegistryProps> = ({ onRegisterAgent }) => {
     storageKey: 'agent-registry-table-preferences',
     defaultPreferences: {
       pageSize: 20,
-      visibleContent: ['name', 'version', 'skills', 'last_seen'],
+      visibleContent: ['name', 'version', 'skills', 'updated_at'],
       wrapLines: true,
       stripedRows: false,
       contentDensity: 'comfortable' as const,
@@ -199,12 +199,12 @@ const AgentRegistry: React.FC<AgentRegistryProps> = ({ onRegisterAgent }) => {
     },
 
     {
-      id: 'last_seen',
-      header: 'Last Seen',
+      id: 'updated_at',
+      header: 'Last Updated',
       cell: (item: Agent) => {
-        const lastSeen = new Date(item.last_seen);
+        const updatedAt = new Date(item.updated_at);
         const now = new Date();
-        const diffMinutes = Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60));
+        const diffMinutes = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60));
         
         let displayText;
         if (diffMinutes < 1) {
@@ -214,7 +214,7 @@ const AgentRegistry: React.FC<AgentRegistryProps> = ({ onRegisterAgent }) => {
         } else if (diffMinutes < 1440) {
           displayText = `${Math.floor(diffMinutes / 60)} hours ago`;
         } else {
-          displayText = lastSeen.toLocaleDateString();
+          displayText = updatedAt.toLocaleDateString();
         }
         
         return (
@@ -223,7 +223,7 @@ const AgentRegistry: React.FC<AgentRegistryProps> = ({ onRegisterAgent }) => {
           </div>
         );
       },
-      sortingField: 'last_seen',
+      sortingField: 'updated_at',
       minWidth: 150,
     },
     {

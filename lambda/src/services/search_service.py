@@ -267,8 +267,9 @@ class SearchService:
                     agent_skills = agent_skills_json if isinstance(agent_skills_json, list) else []
                     matched_skills = self._calculate_skill_matches(agent_skills, skills)
                     
-                    # Add agent_id to the result
+                    # Add agent_id and updated_at to the result
                     agent_data['agent_id'] = metadata.get('agent_id')
+                    agent_data['updated_at'] = metadata.get('updated_at', '')
                     
                     # Add search metadata
                     agent_data['_search_metadata'] = {

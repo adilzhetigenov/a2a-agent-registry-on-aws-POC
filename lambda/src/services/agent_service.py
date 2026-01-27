@@ -89,7 +89,7 @@ class AgentService:
             "name": validated_data.get("name"),
             "description": validated_data.get("description"),
             "skills": skill_names,  # Store as array of strings for S3 Vectors filtering
-            "protocolVersion": validated_data.get("protocolVersion"),
+            "version": validated_data.get("version"),
             "url": validated_data.get("url"),
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
@@ -276,8 +276,9 @@ class AgentService:
                 if raw_agent_card:
                     try:
                         agent_data = json.loads(raw_agent_card)
-                        # Add agent_id to the agent data
+                        # Add agent_id and updated_at to the agent data
                         agent_data['agent_id'] = metadata.get('agent_id')
+                        agent_data['updated_at'] = metadata.get('updated_at', '')
                         agents.append(agent_data)
                     except json.JSONDecodeError:
                         logger.warning("Skipping agent with corrupted data", 
@@ -442,7 +443,7 @@ class AgentService:
                 "name": validated_data.get("name"),
                 "description": validated_data.get("description"),
                 "skills": skill_names,  # Store as array of strings for S3 Vectors filtering
-                "protocolVersion": validated_data.get("protocolVersion"),
+                "version": validated_data.get("version"),
                 "url": validated_data.get("url"),
                 "created_at": existing_agent.get("created_at", now.isoformat()),  # Preserve original creation time
                 "updated_at": now.isoformat(),

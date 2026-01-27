@@ -7,7 +7,7 @@ interface Agent {
   agent_id: string;
   agent_card: AgentCard;
   is_online: boolean;
-  last_seen: string;
+  updated_at: string;
 }
 
 interface UseAgentTableOptions {
@@ -63,10 +63,8 @@ export const useAgentTable = (options: UseAgentTableOptions = {}) => {
           transformedAgents = searchResults.map((result, index) => ({
             agent_id: result.agent_id || `search-${index + 1}`,
             agent_card: result.agent_card,
-            is_online: Math.random() > 0.3, // Simulate online status
-            last_seen: new Date(
-              Date.now() - Math.random() * 86400000
-            ).toISOString(), // Random last seen within 24h
+            is_online: false, // Not tracked for search results
+            updated_at: (result as any).updated_at || new Date().toISOString(),
           }));
 
           total = transformedAgents.length;
@@ -81,10 +79,13 @@ export const useAgentTable = (options: UseAgentTableOptions = {}) => {
               const agentWithId = agentData as AgentWithId;
               const agent_id = agentWithId.agent_id || `agent-${offset + index + 1}`;
               
+              // Get updated_at from the response
+              const updated_at = (agentData as any).updated_at || new Date().toISOString();
+              
               // If agentData has agent_id, extract the clean agent card, otherwise use as-is
               const agent_card = agentWithId.agent_id 
                 ? (() => {
-                    const { agent_id: _, ...cleanCard } = agentWithId;
+                    const { agent_id: _, updated_at: __, ...cleanCard } = agentData as any;
                     return cleanCard as AgentCard;
                   })()
                 : agentData as AgentCard;
@@ -92,10 +93,8 @@ export const useAgentTable = (options: UseAgentTableOptions = {}) => {
               return {
                 agent_id,
                 agent_card,
-                is_online: Math.random() > 0.3, // Simulate online status
-                last_seen: new Date(
-                  Date.now() - Math.random() * 86400000
-                ).toISOString(), // Random last seen within 24h
+                is_online: false, // Not tracked
+                updated_at,
               };
             }
           );

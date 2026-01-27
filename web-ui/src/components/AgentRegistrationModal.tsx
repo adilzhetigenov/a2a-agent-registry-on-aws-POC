@@ -42,6 +42,7 @@ const AgentRegistrationModal: React.FC<AgentRegistrationModalProps> = ({
   const sampleAgentCard = {
     name: "Recipe Assistant Agent",
     description: "An AI agent that helps users find and prepare recipes based on available ingredients",
+    version: "1.2.0",
     url: "https://recipe-agent.example.com/api/v1",
     protocolVersion: "0.3.0",
     preferredTransport: "JSONRPC",
@@ -288,7 +289,7 @@ const AgentRegistrationModal: React.FC<AgentRegistrationModalProps> = ({
           <SpaceBetween direction="vertical" size="xs">
             <div><strong>Required Fields:</strong></div>
             <ul style={{ marginLeft: '20px' }}>
-              <li>name, description, url, protocolVersion</li>
+              <li>name, description, version, url, protocolVersion</li>
               <li>capabilities (object with streaming, pushNotifications booleans)</li>
               <li>defaultInputModes, defaultOutputModes (arrays of MIME types)</li>
               <li>skills (array of AgentSkill objects)</li>
