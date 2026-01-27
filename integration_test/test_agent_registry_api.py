@@ -524,12 +524,18 @@ class AgentRegistryAPITester:
                     print(f"❌ Name not updated correctly. Expected: {update_data['name']}, Got: {updated_agent.get('name')}")
                 
                 # Check if skills were updated (should include new skills)
-                updated_skills = set(updated_agent.get('skills', []))
-                expected_skills = set(update_data['skills'])
-                if expected_skills.issubset(updated_skills):
-                    print(f"✅ Skills updated correctly: {updated_agent.get('skills')}")
+                # Skills are stored as AgentSkill objects with 'name' field, so extract names for comparison
+                updated_skills_list = updated_agent.get('skills', [])
+                updated_skill_names = set(
+                    s['name'] if isinstance(s, dict) else s for s in updated_skills_list
+                )
+                expected_skill_names = set(
+                    s['name'] if isinstance(s, dict) else s for s in update_data['skills']
+                )
+                if expected_skill_names.issubset(updated_skill_names):
+                    print(f"✅ Skills updated correctly: {list(updated_skill_names)}")
                 else:
-                    print(f"❌ Skills not updated correctly. Expected to include: {update_data['skills']}, Got: {updated_agent.get('skills')}")
+                    print(f"❌ Skills not updated correctly. Expected to include: {expected_skill_names}, Got: {updated_skill_names}")
                 
                 # Check that other fields were preserved
                 if updated_agent.get('version') == original_agent.get('version'):
