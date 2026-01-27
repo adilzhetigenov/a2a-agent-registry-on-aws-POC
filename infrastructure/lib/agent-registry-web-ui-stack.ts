@@ -69,6 +69,7 @@ export class AgentRegistryWebUI extends cdk.Stack {
       comment: "Agent Registry Web UI Distribution",
       defaultRootObject: "index.html",
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100, // Use only North America and Europe
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       enableLogging: true,
       logBucket: cloudFrontLogsBucket,
       logFilePrefix: "cloudfront-logs/",
@@ -420,41 +421,16 @@ def handler(event, context):
     // Ensure the config is generated after the main deployment
     configGeneratorResource.node.addDependency(webUIDeployment);
 
-    // Stack outputs
-    new cdk.CfnOutput(this, "WebUIUrl", {
+    // Stack outputs for human use
+    new cdk.CfnOutput(this, "CloudFrontDomainName", {
       value: `https://${this.distribution.distributionDomainName}`,
-      description: "Agent Registry Web UI URL",
-      exportName: `${this.stackName}-WebUIUrl`,
+      description:
+        "CloudFront Domain Name - use this as corsOrigin in AgentRegistryStack to restrict CORS",
     });
 
-    new cdk.CfnOutput(this, "CognitoUserPoolId", {
-      value: this.userPool.userPoolId,
-      description: "Cognito User Pool ID",
-      exportName: `${this.stackName}-UserPoolId`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoUserPoolClientId", {
-      value: this.userPoolClient.userPoolClientId,
-      description: "Cognito User Pool Client ID",
-      exportName: `${this.stackName}-UserPoolClientId`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoIdentityPoolId", {
-      value: this.identityPool.ref,
-      description: "Cognito Identity Pool ID",
-      exportName: `${this.stackName}-IdentityPoolId`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoDomain", {
-      value: `${userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`,
-      description: "Cognito Hosted UI Domain",
-      exportName: `${this.stackName}-CognitoDomain`,
-    });
-
-    new cdk.CfnOutput(this, "CloudFrontDistributionId", {
-      value: this.distribution.distributionId,
-      description: "CloudFront Distribution ID",
-      exportName: `${this.stackName}-DistributionId`,
+    new cdk.CfnOutput(this, "CognitoUserPoolConsoleUrl", {
+      value: `https://${this.region}.console.aws.amazon.com/cognito/v2/idp/user-pools/${this.userPool.userPoolId}/users?region=${this.region}`,
+      description: "Cognito User Pool console URL - use this to add users for Web UI login",
     });
 
     // CDK-NAG Suppressions
@@ -490,7 +466,7 @@ def handler(event, context):
         {
           id: "AwsSolutions-CFR4",
           reason:
-            "Using default CloudFront certificate with minimum TLS 1.0 is acceptable for this internal application. Custom domain with higher TLS requirements can be added later if needed.",
+            "Using default CloudFront certificate with TLS 1.2 minimum protocol version (TLS_V1_2_2021). Custom domain can be added later if needed.",
         },
       ],
       true

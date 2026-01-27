@@ -77,15 +77,18 @@ class AgentService:
         agent_id = str(uuid.uuid4())
         
         # Add metadata (S3 Vectors limit: 10 keys max)
-        # Note: S3 Vectors metadata values must be strings, numbers, booleans, or arrays
+        # Note: S3 Vectors metadata values must be strings, numbers, booleans, or arrays of strings/numbers
         now = datetime.now(timezone.utc)
         skills_list = validated_data.get("skills", [])
+        # Extract skill names as simple strings for S3 Vectors filtering
+        # (S3 Vectors arrays can only contain strings or numbers, not objects)
+        skill_names = [skill.get("name", "") for skill in skills_list if isinstance(skill, dict) and skill.get("name")]
         
         agent_metadata = {
             "agent_id": agent_id,
             "name": validated_data.get("name"),
             "description": validated_data.get("description"),
-            "skills": skills_list,  # Store as array for S3 Vectors filtering
+            "skills": skill_names,  # Store as array of strings for S3 Vectors filtering
             "version": validated_data.get("version"),
             "url": validated_data.get("url"),
             "created_at": now.isoformat(),
@@ -273,8 +276,9 @@ class AgentService:
                 if raw_agent_card:
                     try:
                         agent_data = json.loads(raw_agent_card)
-                        # Add agent_id to the agent data
+                        # Add agent_id and updated_at to the agent data
                         agent_data['agent_id'] = metadata.get('agent_id')
+                        agent_data['updated_at'] = metadata.get('updated_at', '')
                         agents.append(agent_data)
                     except json.JSONDecodeError:
                         logger.warning("Skipping agent with corrupted data", 
@@ -430,12 +434,15 @@ class AgentService:
             # Update metadata (S3 Vectors limit: 10 keys max)
             now = datetime.now(timezone.utc)
             skills_list = validated_data.get("skills", [])
+            # Extract skill names as simple strings for S3 Vectors filtering
+            # (S3 Vectors arrays can only contain strings or numbers, not objects)
+            skill_names = [skill.get("name", "") for skill in skills_list if isinstance(skill, dict) and skill.get("name")]
             
             agent_metadata = {
                 "agent_id": agent_id,
                 "name": validated_data.get("name"),
                 "description": validated_data.get("description"),
-                "skills": skills_list,  # Store as array for S3 Vectors filtering
+                "skills": skill_names,  # Store as array of strings for S3 Vectors filtering
                 "version": validated_data.get("version"),
                 "url": validated_data.get("url"),
                 "created_at": existing_agent.get("created_at", now.isoformat()),  # Preserve original creation time
