@@ -421,48 +421,16 @@ def handler(event, context):
     // Ensure the config is generated after the main deployment
     configGeneratorResource.node.addDependency(webUIDeployment);
 
-    // Stack outputs
-    new cdk.CfnOutput(this, "WebUIUrl", {
-      value: `https://${this.distribution.distributionDomainName}`,
-      description: "Agent Registry Web UI URL",
-      exportName: `${this.stackName}-WebUIUrl`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoUserPoolId", {
-      value: this.userPool.userPoolId,
-      description: "Cognito User Pool ID",
-      exportName: `${this.stackName}-UserPoolId`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoUserPoolClientId", {
-      value: this.userPoolClient.userPoolClientId,
-      description: "Cognito User Pool Client ID",
-      exportName: `${this.stackName}-UserPoolClientId`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoIdentityPoolId", {
-      value: this.identityPool.ref,
-      description: "Cognito Identity Pool ID",
-      exportName: `${this.stackName}-IdentityPoolId`,
-    });
-
-    new cdk.CfnOutput(this, "CognitoDomain", {
-      value: `${userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`,
-      description: "Cognito Hosted UI Domain",
-      exportName: `${this.stackName}-CognitoDomain`,
-    });
-
-    new cdk.CfnOutput(this, "CloudFrontDistributionId", {
-      value: this.distribution.distributionId,
-      description: "CloudFront Distribution ID",
-      exportName: `${this.stackName}-DistributionId`,
-    });
-
+    // Stack outputs for human use
     new cdk.CfnOutput(this, "CloudFrontDomainName", {
       value: `https://${this.distribution.distributionDomainName}`,
       description:
         "CloudFront Domain Name - use this as corsOrigin in AgentRegistryStack to restrict CORS",
-      exportName: `${this.stackName}-CloudFrontDomainName`,
+    });
+
+    new cdk.CfnOutput(this, "CognitoUserPoolConsoleUrl", {
+      value: `https://${this.region}.console.aws.amazon.com/cognito/v2/idp/user-pools/${this.userPool.userPoolId}/users?region=${this.region}`,
+      description: "Cognito User Pool console URL - use this to add users for Web UI login",
     });
 
     // CDK-NAG Suppressions

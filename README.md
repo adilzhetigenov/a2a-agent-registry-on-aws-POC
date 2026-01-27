@@ -120,6 +120,14 @@ The Web UI stack deploys:
 - Cognito User Pool for authentication
 - Cognito Identity Pool for AWS credentials
 
+> **Adding Users to the Web UI**
+>
+> Self-signup is disabled for security. To add users, use the `CognitoUserPoolConsoleUrl` output from the stack deployment — it links directly to the Cognito User Pool console where you can create users:
+> 1. Click the URL from the stack output
+> 2. Click "Create user"
+> 3. Enter the user's email and set a temporary password
+> 4. The user will receive an email to set their permanent password on first login
+
 > **Important: CORS Configuration**
 >
 > By default, the API allows cross-origin requests from any origin (`*`). You can restrict CORS to a specific domain by passing the `corsOrigin` parameter.

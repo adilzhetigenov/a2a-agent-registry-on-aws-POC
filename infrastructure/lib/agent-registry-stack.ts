@@ -51,25 +51,6 @@ export class AgentRegistryStack extends cdk.Stack {
       nonFilterableMetadataKeys: ["raw_agent_card"], // Large metadata that shouldn't be filtered
     });
 
-    // Stack outputs for other services to reference
-    new cdk.CfnOutput(this, "S3VectorsBucketName", {
-      value: this.vectorBucket.vectorBucketName,
-      description: "S3 Vectors bucket name for agent embeddings",
-      exportName: `${this.stackName}-VectorBucketName`,
-    });
-
-    new cdk.CfnOutput(this, "S3VectorsIndexName", {
-      value: this.vectorIndex.vectorIndexName,
-      description: "S3 Vectors index name for agent embeddings",
-      exportName: `${this.stackName}-VectorIndexName`,
-    });
-
-    new cdk.CfnOutput(this, "S3VectorsBucketArn", {
-      value: this.vectorBucket.vectorBucketArn,
-      description: "ARN of the S3 Vectors bucket",
-      exportName: `${this.stackName}-VectorBucketArn`,
-    });
-
     // Create IAM role for API Lambda function
     const apiLambdaRole = new iam.Role(this, "ApiLambdaRole", {
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
@@ -280,36 +261,17 @@ export class AgentRegistryStack extends cdk.Stack {
       },
     });
 
-    // Stack outputs for API Gateway
+    // Stack outputs for cross-stack references (used by AgentRegistryWebUI)
     new cdk.CfnOutput(this, "ApiGatewayUrl", {
       value: this.api.url,
       description: "Agent Registry API Gateway URL",
       exportName: `${this.stackName}-ApiUrl`,
     });
 
-    // Export for Agent Registry API Endpoint (prod stage)
-    new cdk.CfnOutput(this, "AgentRegistryApiEndpoint", {
-      value: this.api.url,
-      description: "Agent Registry API Endpoint for prod stage",
-      exportName: "AgentRegistry::Api::Endpoint",
-    });
-
     new cdk.CfnOutput(this, "ApiGatewayId", {
       value: this.api.restApiId,
       description: "Agent Registry API Gateway ID",
       exportName: `${this.stackName}-ApiId`,
-    });
-
-    new cdk.CfnOutput(this, "ApiLambdaArn", {
-      value: this.apiLambda.functionArn,
-      description: "Agent Registry API Lambda function ARN",
-      exportName: `${this.stackName}-ApiLambdaArn`,
-    });
-
-    new cdk.CfnOutput(this, "ApiLambdaName", {
-      value: this.apiLambda.functionName,
-      description: "Agent Registry API Lambda function name",
-      exportName: `${this.stackName}-ApiLambdaName`,
     });
 
     // CDK-NAG Suppressions
