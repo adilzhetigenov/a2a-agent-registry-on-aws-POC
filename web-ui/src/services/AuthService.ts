@@ -57,8 +57,8 @@ const initializeAmplify = () => {
       oauth: {
         domain: config.cognitoDomain,
         scope: ['email', 'openid', 'profile'],
-        redirectSignIn: window.location.origin,
-        redirectSignOut: window.location.origin,
+        redirectSignIn: window.location.origin + (process.env.PUBLIC_URL || ''),
+        redirectSignOut: window.location.origin + (process.env.PUBLIC_URL || ''),
         responseType: 'code',
       },
     },
@@ -246,14 +246,16 @@ export class AuthService {
 
   public getHostedUIUrl(): string {
     const config = getAWSConfig();
-    const redirectUri = encodeURIComponent(window.location.origin);
+    const baseUrl = window.location.origin + (process.env.PUBLIC_URL || '');
+    const redirectUri = encodeURIComponent(baseUrl);
     const scopes = encodeURIComponent('email openid profile');
     return `https://${config.cognitoDomain}/login?client_id=${config.userPoolWebClientId}&response_type=code&scope=${scopes}&redirect_uri=${redirectUri}`;
   }
 
   public getHostedUILogoutUrl(): string {
     const config = getAWSConfig();
-    const redirectUri = encodeURIComponent(window.location.origin);
+    const baseUrl = window.location.origin + (process.env.PUBLIC_URL || '');
+    const redirectUri = encodeURIComponent(baseUrl);
     return `https://${config.cognitoDomain}/logout?client_id=${config.userPoolWebClientId}&logout_uri=${redirectUri}`;
   }
 

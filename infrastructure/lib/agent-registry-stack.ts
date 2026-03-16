@@ -42,6 +42,9 @@ export class AgentRegistryStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
+    // Remove CDK automatic tags from VectorBucket as S3 Vectors doesn't allow aws: prefixed tags
+    cdk.Tags.of(this.vectorBucket).remove("aws:cdk:path");
+
     // Create vector index for agent embeddings
     this.vectorIndex = new s3vectors.VectorIndex(this, "VectorIndex", {
       vectorBucket: this.vectorBucket,
@@ -50,6 +53,9 @@ export class AgentRegistryStack extends cdk.Stack {
       distanceMetric: s3vectors.VectorIndexDistanceMetric.COSINE,
       nonFilterableMetadataKeys: ["raw_agent_card"], // Large metadata that shouldn't be filtered
     });
+
+    // Remove CDK automatic tags from VectorIndex as S3 Vectors doesn't allow aws: prefixed tags
+    cdk.Tags.of(this.vectorIndex).remove("aws:cdk:path");
 
     // Create IAM role for API Lambda function
     const apiLambdaRole = new iam.Role(this, "ApiLambdaRole", {
@@ -187,7 +193,7 @@ export class AgentRegistryStack extends cdk.Stack {
           user: true,
         }),
       },
-      cloudWatchRole: false, // Disable to avoid AWS managed policy
+      cloudWatchRole: true, // Enable CloudWatch role for API Gateway logging
       endpointConfiguration: {
         types: [apigateway.EndpointType.REGIONAL],
       },
@@ -365,7 +371,7 @@ export class AgentRegistryStack extends cdk.Stack {
             "Wildcard permission needed for CloudWatch Logs stream creation. The resource is scoped to the specific log group for this Lambda function. See: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html",
           appliesTo: [
             {
-              regex: "/Resource::arn:aws:logs:us-east-1:.*:log-group:/aws/lambda/agent-registry-api:\\*/"
+              regex: "/Resource::arn:aws:logs:.*:.*:log-group:/aws/lambda/agent-registry-api:\\*/"
             },
           ],
         },
@@ -394,6 +400,22 @@ export class AgentRegistryStack extends cdk.Stack {
         },
       ],
       true
+    );
+
+    // Suppress CloudWatch role managed policy warning
+    NagSuppressions.addResourceSuppressionsByPath(
+      this,
+      "/AgentRegistryStack/AgentRegistryApi/CloudWatchRole/Resource",
+      [
+        {
+          id: "AwsSolutions-IAM4",
+          reason:
+            "API Gateway CloudWatch role uses AWS managed policy for pushing logs. This is the standard CDK pattern for API Gateway logging.",
+          appliesTo: [
+            "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs",
+          ],
+        },
+      ]
     );
   }
 }
