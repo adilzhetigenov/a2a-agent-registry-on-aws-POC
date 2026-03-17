@@ -11,3 +11,4 @@ infrastructure/cdk.out*
 **/uv.lock
 a2a-agent-registry-on-aws.drawio
 .hypothesis
+docs/deployment-journal.md

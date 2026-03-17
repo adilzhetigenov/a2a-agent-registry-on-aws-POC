@@ -23,6 +23,7 @@ export class AgentRegistryStack extends cdk.Stack {
   public readonly vectorIndex: s3vectors.VectorIndex;
   public readonly apiLambda: PythonFunction;
   public readonly api: apigateway.RestApi;
+  public readonly m2mApi: apigateway.RestApi;
 
   constructor(scope: Construct, id: string, props?: AgentRegistryStackProps) {
     super(scope, id, props);
@@ -268,6 +269,133 @@ export class AgentRegistryStack extends cdk.Stack {
     });
 
     // Stack outputs for cross-stack references (used by AgentRegistryWebUI)
+
+    // ========== Machine-to-Machine API (API Key Auth) ==========
+
+    const m2mApiLogGroup = new logs.LogGroup(this, "M2MApiGatewayLogGroup", {
+      logGroupName: `/aws/apigateway/agent-registry-m2m-api`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.m2mApi = new apigateway.RestApi(this, "AgentRegistryM2MApi", {
+      restApiName: "Agent Registry M2M API",
+      description: "Machine-to-machine API for agent self-registration and discovery (API Key auth)",
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ["Content-Type", "X-Api-Key"],
+      },
+      deployOptions: {
+        stageName: "prod",
+        throttlingRateLimit: 50,
+        throttlingBurstLimit: 100,
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        metricsEnabled: true,
+        accessLogDestination: new apigateway.LogGroupLogDestination(m2mApiLogGroup),
+        accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields({
+          caller: true,
+          httpMethod: true,
+          ip: true,
+          protocol: true,
+          requestTime: true,
+          resourcePath: true,
+          responseLength: true,
+          status: true,
+          user: true,
+        }),
+      },
+      cloudWatchRole: false, // Reuse the role created by the main API
+      endpointConfiguration: {
+        types: [apigateway.EndpointType.REGIONAL],
+      },
+      apiKeySourceType: apigateway.ApiKeySourceType.HEADER,
+    });
+
+    // M2M proxy integration — same Lambda
+    const m2mLambdaIntegration = new apigateway.LambdaIntegration(this.apiLambda, {
+      proxy: true,
+      allowTestInvoke: true,
+    });
+
+    // M2M root + proxy routes with API Key required
+    this.m2mApi.root.addMethod("GET", m2mLambdaIntegration, {
+      apiKeyRequired: true,
+    });
+
+    this.m2mApi.root.addProxy({
+      defaultIntegration: m2mLambdaIntegration,
+      defaultMethodOptions: {
+        apiKeyRequired: true,
+      },
+      anyMethod: true,
+    });
+
+    // Grant M2M API Gateway permission to invoke Lambda
+    this.apiLambda.addPermission("M2MApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: this.m2mApi.arnForExecuteApi("*"),
+    });
+
+    // Usage Plan
+    const usagePlan = this.m2mApi.addUsagePlan("AgentUsagePlan", {
+      name: "agent-registry-agent-plan",
+      description: "Usage plan for agents accessing the registry via API Key",
+      throttle: {
+        rateLimit: 50,
+        burstLimit: 100,
+      },
+      quota: {
+        limit: 10000,
+        period: apigateway.Period.DAY,
+      },
+    });
+
+    usagePlan.addApiStage({
+      stage: this.m2mApi.deploymentStage,
+    });
+
+    // API Key
+    const apiKey = this.m2mApi.addApiKey("AgentRegistryApiKey", {
+      apiKeyName: "agent-registry-m2m-key",
+      description: "API Key for agent self-registration and discovery",
+    });
+
+    usagePlan.addApiKey(apiKey);
+
+    // M2M CORS error responses
+    this.m2mApi.addGatewayResponse("M2MDefault4XX", {
+      type: apigateway.ResponseType.DEFAULT_4XX,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'Content-Type,X-Api-Key'",
+        "Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE'",
+      },
+    });
+
+    this.m2mApi.addGatewayResponse("M2MDefault5XX", {
+      type: apigateway.ResponseType.DEFAULT_5XX,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'Content-Type,X-Api-Key'",
+        "Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE'",
+      },
+    });
+
+    // ========== Stack Outputs ==========
+
+    new cdk.CfnOutput(this, "M2MApiUrl", {
+      value: this.m2mApi.url,
+      description: "Machine-to-Machine API URL (API Key auth)",
+      exportName: `${this.stackName}-M2MApiUrl`,
+    });
+
+    new cdk.CfnOutput(this, "M2MApiKeyId", {
+      value: apiKey.keyId,
+      description: "API Key ID — retrieve the key value with: aws apigateway get-api-key --api-key <id> --include-value",
+      exportName: `${this.stackName}-M2MApiKeyId`,
+    });
     new cdk.CfnOutput(this, "ApiGatewayUrl", {
       value: this.api.url,
       description: "Agent Registry API Gateway URL",
@@ -416,6 +544,42 @@ export class AgentRegistryStack extends cdk.Stack {
           ],
         },
       ]
+    );
+
+    // ========== M2M API CDK-NAG Suppressions ==========
+
+    NagSuppressions.addResourceSuppressions(
+      this.m2mApi,
+      [
+        {
+          id: "AwsSolutions-APIG2",
+          reason: "Request validation handled in Lambda. M2M API uses API Key auth with proxy integration.",
+        },
+        {
+          id: "AwsSolutions-COG4",
+          reason: "M2M API uses API Key authentication, not Cognito. Designed for agent-to-agent communication.",
+        },
+        {
+          id: "AwsSolutions-APIG4",
+          reason: "M2M API uses API Key authentication for machine-to-machine access. No IAM or Cognito auth needed.",
+        },
+        {
+          id: "AwsSolutions-APIG3",
+          reason: "WAF not required for internal PoC M2M API behind Cloudflare tunnel.",
+        },
+      ],
+      true
+    );
+
+    NagSuppressions.addResourceSuppressions(
+      this.m2mApi.deploymentStage,
+      [
+        {
+          id: "AwsSolutions-APIG3",
+          reason: "WAF not required for internal PoC M2M API behind Cloudflare tunnel.",
+        },
+      ],
+      true
     );
   }
 }
